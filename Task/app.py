@@ -1,20 +1,20 @@
-from flask import Flask, request, render_template
-from cela import send_email
+from flask import Flask, request
+from celery_app import send_email
 import logging
 from datetime import datetime
 
 app = Flask(__name__)
 
 # Configure logging
-logging.basicConfig(filename='app.log', level=logging.INFO)
+logging.basicConfig(filename='/var/log/messaging_system.log', level=logging.INFO)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return "Welcome to the messaging system. Use '?sendmail=' or '?talktome' parameters."
 
 @app.route('/sendmail')
 def sendmail():
-    recipient = request.args.get('email', 'example@example.com')
+    recipient = request.args.get('sendmail', 'example@example.com')
     send_email.delay(recipient)
     return f"Email sending task queued for {recipient}"
 

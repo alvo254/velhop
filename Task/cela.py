@@ -1,15 +1,32 @@
-from celery import Celery
-import os
-from dotenv import load_dotenv
-
 # Load environment variables
 load_dotenv()
 
 # Configure Celery
-celery = Celery('tasks', broker=os.getenv('CELERY_BROKER_URL', 'amqp://guest:guest@localhost:5672//'))
+app = Celery('tasks', broker='amqp://guest:guest@localhost:5672//')
 
-@celery.task
+@app.task
 def send_email(recipient):
-    # This is a mock email sending function
-    print(f"Sending email to {recipient}")
-    return f"Email sent to {recipient}"
+    # SMTP Configuration
+    smtp_server = os.getenv('SMTP_SERVER')
+    smtp_port = int(os.getenv('SMTP_PORT'))
+    smtp_username = os.getenv('SMTP_USERNAME')
+    smtp_password = os.getenv('SMTP_PASSWORD')
+
+    # Email content
+    subject = "Test Email"
+    body = "This is a test email sent from the Python application."
+    sender = "sender@example.com"
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = recipient
+
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+        return f"Email sent to {recipient}"
+    except Exception as e:
+        return f"Failed to send email: {str(e)}"
